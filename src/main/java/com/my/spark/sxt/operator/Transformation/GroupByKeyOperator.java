@@ -1,4 +1,4 @@
-package com.my.spark.sxt.Transformation;
+package com.my.spark.sxt.operator.Transformation;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;

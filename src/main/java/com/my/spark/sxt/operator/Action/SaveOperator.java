@@ -1,4 +1,4 @@
-package com.my.spark.sxt.Action;
+package com.my.spark.sxt.operator.Action;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -8,11 +8,10 @@ import scala.Tuple2;
 import java.util.Arrays;
 import java.util.List;
 
-// takeSample = take + sample
-public class TakeSampleOperator {
+public class SaveOperator {
 
     public static void main(String[] args){
-        SparkConf conf = new SparkConf().setMaster("local").setAppName("TakeSampleOperator"); // Driver节点
+        SparkConf conf = new SparkConf().setMaster("local").setAppName("SaveOperator");
         JavaSparkContext sc = new JavaSparkContext(conf);
 
         List<Tuple2<String, Integer>> scoreList = Arrays.asList(
@@ -25,13 +24,8 @@ public class TakeSampleOperator {
                 new Tuple2<String, Integer>("wangfei", 190),
                 new Tuple2<String, Integer>("wangfei", 80)
         );
-
         JavaPairRDD<String, Integer> staffRDD = sc.parallelizePairs(scoreList);
-
-        List<Tuple2<String, Integer>> takeRDD = staffRDD.takeSample(false,3,1L);
-        for(Tuple2 tuple : takeRDD){
-            System.out.println(tuple._1 + " " + tuple._2);
-        }
+        staffRDD.saveAsTextFile("E:\\code\\workSpace\\mylearnObject\\git_directory\\Spark\\Spark_Big_Project\\spark-project\\src\\main\\java\\com\\my\\spark\\sxt\\SaveOperator");
 
         sc.close();
     }

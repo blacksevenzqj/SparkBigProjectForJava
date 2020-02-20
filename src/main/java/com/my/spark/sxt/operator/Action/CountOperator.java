@@ -1,4 +1,4 @@
-package com.my.spark.sxt.Action;
+package com.my.spark.sxt.operator.Action;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;

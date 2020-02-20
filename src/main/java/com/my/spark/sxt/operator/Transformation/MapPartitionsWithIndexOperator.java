@@ -1,9 +1,8 @@
-package com.my.spark.sxt.Transformation;
+package com.my.spark.sxt.operator.Transformation;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import java.util.*;
