@@ -15,9 +15,20 @@ import java.util.Arrays;
 public class WordCount {
 
     public static void main(String[] args){
-        SparkConf conf = new SparkConf().setMaster("local").setAppName("wc");
+        SparkConf conf = new SparkConf().setMaster("local[4]").setAppName("wc");
         JavaSparkContext sc = new JavaSparkContext(conf);
-        JavaRDD<String> text = sc.textFile("E:\\code\\workSpace\\mylearnObject\\git_directory\\Spark\\Spark_Big_Project\\spark-project\\src\\main\\java\\com\\my\\spark\\sxt\\test.txt");
+
+        // 情形1：本地文件
+//        String path = "E:\\code\\workSpace\\mylearnObject\\git_directory\\Spark\\Spark_Big_Project\\spark-project\\src\\main\\java\\com\\my\\spark\\sxt\\data\\test.txt";
+//        JavaRDD<String> text = sc.textFile(path, 3); // 显示指定Partition数量为3（优先级高）
+//        JavaRDD<String> text = sc.textFile(path); // 如果没有显示指定Partition数量，则 按照 local[X] 与 2 之间的最小值确定Partition数量。
+
+        // 情形2：Hadoop文件（需再核对验证）
+        String path = "hdfs://hadoop104:9000/xxx/xxx.dat";
+//        JavaRDD<String> text = sc.textFile(path，x); // 显示指定Partition数量：x必须≥实际Hadoop文件block个数；如果x<实际Hadoop文件block个数，则按实际Hadoop文件block个数指定。local[X]亦如此。
+        JavaRDD<String> text = sc.textFile(path); // 如果没有显示指定Partition数量，有多少个block就指定多少个Partition。
+        // 如果 实际Hadoop文件block个数为1，且没有显示指定Partition数量，则按照 local[X] 与 2 之间的最小值确定Partition数量。
+
         JavaRDD<String> words = text.flatMap(new FlatMapFunction<String, String>() {
             @Override
             public Iterable<String> call(String line) throws Exception {

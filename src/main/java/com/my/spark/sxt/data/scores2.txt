@@ -1,0 +1,6 @@
+100 guangzhou 10
+90 guangzhou 20
+60 beijing 101
+60 beijing 200
+30 shanghai 130
+70 shanghai 120
