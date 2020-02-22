@@ -1,4 +1,4 @@
-package com.my.spark.sxt.operator;
+package com.my.spark.sxt.core;
 
 import scala.math.Ordered;
 
