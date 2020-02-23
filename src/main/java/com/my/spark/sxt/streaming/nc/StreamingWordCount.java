@@ -1,4 +1,4 @@
-package com.my.spark.sxt.streaming;
+package com.my.spark.sxt.streaming.nc;
 
 import java.util.Arrays;
 import org.apache.spark.SparkConf;
