@@ -8,7 +8,16 @@ import org.apache.spark.api.java.function.VoidFunction;
 
 import java.util.*;
 
-
+/**
+ * map:
+ *    一条数据一条数据的处理（文件系统，数据库等等）
+ * mapPartitions：
+ *    一次获取的是一个分区的数据（hdfs）
+ *    正常情况下，mapPartitions 是一个高性能的算子
+ *    因为每次处理的是一个分区的数据，减少了去获取数据的次数。
+ *
+ *    但是如果我们的分区如果设置得不合理，有可能导致每个分区里面的数据量过大。
+ */
 public class MapPartitionsOperator {
 
     public static void main(String[] args){

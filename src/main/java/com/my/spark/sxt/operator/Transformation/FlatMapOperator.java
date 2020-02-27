@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.VoidFunction;
 
 import java.util.Arrays;
@@ -26,10 +27,17 @@ public class FlatMapOperator {
             }
         });
 
-        for(String staffInfo : staffRDD2.collect()){ //将数据收集到Driver节点，慎用！
+        JavaRDD<String> staffRDD3 = staffRDD2.map(new Function<String, String>() {
+            @Override
+            public String call(String v1) throws Exception {
+                return "Hello " + v1;
+            }
+        });
+
+        for(String staffInfo : staffRDD3.collect()){ //将数据收集到Driver节点，慎用！
             System.out.println(staffInfo);
         }
-        staffRDD2.foreach(new VoidFunction<String>() {
+        staffRDD3.foreach(new VoidFunction<String>() {
             @Override
             public void call(String s) throws Exception {
                 System.out.println(s);
