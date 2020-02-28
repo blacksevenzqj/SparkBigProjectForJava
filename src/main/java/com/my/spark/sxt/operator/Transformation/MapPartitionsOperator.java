@@ -4,6 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.VoidFunction;
 
 import java.util.*;
@@ -45,6 +46,22 @@ public class MapPartitionsOperator {
             }
         });
         scoreRDD.foreach(new VoidFunction<Integer>() { // foreach是在Executor中执行
+            @Override
+            public void call(Integer integer) throws Exception {
+                System.out.println(integer);
+            }
+        });
+
+
+        // map方式
+        JavaRDD<Integer> scoreRDD2 = nameRDD.map(new Function<String, Integer>() {
+            @Override
+            public Integer call(String v1) throws Exception {
+                Integer score = scoreMap.get(v1);
+                return score;
+            }
+        });
+        scoreRDD2.foreach(new VoidFunction<Integer>() { // foreach是在Executor中执行
             @Override
             public void call(Integer integer) throws Exception {
                 System.out.println(integer);
