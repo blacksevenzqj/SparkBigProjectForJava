@@ -182,9 +182,9 @@ public class UserVisitSessionAnalyzeSpark {
 		
 		/**
 		 * 重构的RDD：生成公共的RDD，通过筛选条件的session的访问明细数据
-		 * sessionid2detailRDD，就是代表了通过筛选的session join对应的访问明细数据（和sessionid2actionRDD结构是一样的）
+		 * sessionid2detailRDD，就是代表了通过筛选的session join对应的访问明细数据
 		 */
-		// <sessionid, Row>
+		// <sessionid, Row> 意思就是要 sessionid2actionRDD 的过滤结果集
 		JavaPairRDD<String, Row> sessionid2detailRDD = getSessionid2detailRDD(
 				filteredSessionid2AggrInfoRDD, sessionid2actionRDD);
 		sessionid2detailRDD = sessionid2detailRDD.persist(StorageLevel.MEMORY_ONLY());
