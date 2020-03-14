@@ -1052,7 +1052,8 @@ public class UserVisitSessionAnalyzeSpark {
 			String hour = dateHour.split("_")[1];  
 			
 			long count = Long.valueOf(String.valueOf(countEntry.getValue()));  
-			
+
+			// dateHourCountMap(日期 : hourCountMap(小时 : session数量))
 			Map<String, Long> hourCountMap = dateHourCountMap.get(date);
 			if(hourCountMap == null) {
 				hourCountMap = new HashMap<String, Long>();
@@ -1073,7 +1074,7 @@ public class UserVisitSessionAnalyzeSpark {
 		 * 还是比较消耗内存和网络传输性能的
 		 * 将map做成广播变量
 		 */
-		// Map<date, Map<hour, List<每小时抽取session随机数>>>
+		// Map<date, Map<hour, List<每小时抽取session随机数索引>>>：List为该小时内数据集的随机索引，才能进行抽取
 		Map<String, Map<String, List<Integer>>> dateHourExtractMap = new HashMap<String, Map<String, List<Integer>>>();
 		
 		Random random = new Random();
@@ -1087,7 +1088,8 @@ public class UserVisitSessionAnalyzeSpark {
 			for(long hourCount : hourCountMap.values()) {
 				sessionCount += hourCount;
 			}
-			
+
+			// dateHourExtractMap(日期 : hourExtractMap(小时 : List<每小时抽取session随机数索引>))
 			Map<String, List<Integer>> hourExtractMap = dateHourExtractMap.get(date);
 			if(hourExtractMap == null) {
 				hourExtractMap = new HashMap<String, List<Integer>>();
@@ -1098,7 +1100,8 @@ public class UserVisitSessionAnalyzeSpark {
 			for(Map.Entry<String, Long> hourCountEntry : hourCountMap.entrySet()) {
 				String hour = hourCountEntry.getKey();
 				long count = hourCountEntry.getValue();
-				
+
+				// 该小时Session数 / 该天Session数 = 该小时Session占比 → 乘以 该天抽取Session数量 = 该小时抽取Session数量
 				// 计算每个小时的session数量，占据当天总session数量的比例，直接乘以每天要抽取的数量
 				// 就可以计算出，当前小时需要抽取的session数量
 				int hourExtractNumber = (int)(((double)count / (double)sessionCount) * extractNumberPerDay);
@@ -1116,7 +1119,7 @@ public class UserVisitSessionAnalyzeSpark {
 				// 生成上面计算出来的  当前小时需要抽取的session数量 的随机索引
 				for(int i = 0; i < hourExtractNumber; i++) {
 					int extractIndex = random.nextInt((int) count); // 随机数范围
-					while(extractIndexList.contains(extractIndex)) {
+					while(extractIndexList.contains(extractIndex)) { // 如果列表中已经包含了，则重新生成一个随机数索引
 						extractIndex = random.nextInt((int) count);
 					}
 					extractIndexList.add(extractIndex);
@@ -1126,6 +1129,10 @@ public class UserVisitSessionAnalyzeSpark {
 		
 		/**
 		 * fastutil的使用，很简单，比如List<Integer>的list，对应到fastutil，就是IntList
+		 *
+		 * 将 dateHourExtractMap(日期 : hourExtractMap(小时 : List<每小时抽取session随机数索引>)) 换为
+		 * fastutilDateHourExtractMap(日期 : fastutilHourExtractMap(小时 : IntList<每小时抽取session随机数索引>))
+		 * 其实就是 List 换为 IntList
 		 */
 		Map<String, Map<String, IntList>> fastutilDateHourExtractMap = new HashMap<String, Map<String, IntList>>();
 		
@@ -1370,6 +1377,7 @@ public class UserVisitSessionAnalyzeSpark {
 							list.add(new Tuple2<Long, Long>(clickCategoryId, clickCategoryId));   
 						}
 
+						// 这里的 orderCategoryIds.split(",") 循环估计是做错了
 						String orderCategoryIds = row.getString(8);
 						if(orderCategoryIds != null) {
 							String[] orderCategoryIdsSplited = orderCategoryIds.split(",");  
@@ -1377,7 +1385,8 @@ public class UserVisitSessionAnalyzeSpark {
 								list.add(new Tuple2<Long, Long>(Long.valueOf(orderCategoryId), Long.valueOf(orderCategoryId)));
 							}
 						}
-						
+
+						// 这里的 payCategoryIds.split(",") 循环估计是做错了
 						String payCategoryIds = row.getString(10);
 						if(payCategoryIds != null) {
 							String[] payCategoryIdsSplited = payCategoryIds.split(",");  
@@ -1428,6 +1437,7 @@ public class UserVisitSessionAnalyzeSpark {
 		
 		/**
 		 * 第五步：将数据映射成<CategorySortKey,info>格式的RDD，然后进行二次排序（降序）
+		 * 自定义 CategorySortKey 排序类
 		 */
 		// <CategorySortKey, categoryid_click_count_str>
 		JavaPairRDD<CategorySortKey, String> sortKey2countRDD = categoryid2countRDD.mapToPair( // <categoryid, categoryid_click_count_str>
@@ -1713,7 +1723,13 @@ public class UserVisitSessionAnalyzeSpark {
 		// 解释一下，如果用leftOuterJoin，就可能出现，右边那个RDD中，join过来时，没有值
 		// 所以Tuple中的第二个值用Optional<Long>类型，就代表，可能有值，可能没有值
 		// <clickCategoryId, Tuple2<clickCategoryId, Optional<clickCategoryId_count>>> 其他以此类推
-		JavaPairRDD<Long, Tuple2<Long, Optional<Long>>> tmpJoinRDD = 
+		/**
+		 * 当categoryidRDD中是其他ID时，如：
+		 * <orderCategoryId, Tuple2<orderCategoryId, Optional<clickCategoryId_count>无值>>
+		 * <payCategoryId, Tuple2<payCategoryId, Optional<clickCategoryId_count>无值>>
+		 *  当进行.mapToPair时，上述两种行的数据 当然也会遍历，如下程序所示：只是拼接value字符串的clickCount为0
+		 * */
+		JavaPairRDD<Long, Tuple2<Long, Optional<Long>>> tmpJoinRDD =
 				categoryidRDD.leftOuterJoin(clickCategoryId2CountRDD);
 		
 		JavaPairRDD<Long, String> tmpMapRDD = tmpJoinRDD.mapToPair(
@@ -1721,13 +1737,13 @@ public class UserVisitSessionAnalyzeSpark {
 					private static final long serialVersionUID = 1L;
 					@Override
 					public Tuple2<Long, String> call(Tuple2<Long, Tuple2<Long, Optional<Long>>> tuple) throws Exception {
-						long categoryid = tuple._1; // 遍历3种类型的ID
+						long categoryid = tuple._1; // 包含3种类型的ID
 						Optional<Long> optional = tuple._2._2;
 						long clickCount = 0L;
 						if(optional.isPresent()) {
 							clickCount = optional.get();
 						}
-						String value = Constants.FIELD_CATEGORY_ID + "=" + categoryid + "|" + // 代表了3种类型ID
+						String value = Constants.FIELD_CATEGORY_ID + "=" + categoryid + "|" + // 包含了3种类型ID
 								Constants.FIELD_CLICK_COUNT + "=" + clickCount;
 						return new Tuple2<Long, String>(categoryid, value);
 					}

@@ -83,6 +83,7 @@ public class MyTest {
             System.out.println(row);
         }
 
+
         // JavaPairRDD<session_id, Row>  ---  Iterable<Tuple2<session_id, Row>>
         JavaPairRDD<String, Row> sessionid2actionRDD = getSessionid2ActionRDD(actionRDD);
         sessionid2actionRDD = sessionid2actionRDD.persist(StorageLevel.MEMORY_ONLY());
@@ -126,10 +127,51 @@ public class MyTest {
         sessionid2detailRDD = sessionid2detailRDD.persist(StorageLevel.MEMORY_ONLY());
         System.out.println("sessionid2detailRDD");
         System.out.println(sessionid2detailRDD.count());
-        for(Tuple2<String, Row> tuple : sessionid2detailRDD.take(3)){
+        for(Tuple2<String, Row> tuple : sessionid2detailRDD.take(6)){
             System.out.println(tuple);
         }
 
+        // 它的 orderCategoryIds.split(",") 和 payCategoryIds.split(",") 逻辑错了，测试
+        JavaPairRDD<Long, Long> categoryidRDD = sessionid2detailRDD.flatMapToPair(
+                new PairFlatMapFunction<Tuple2<String,Row>, Long, Long>() {
+                    private static final long serialVersionUID = 1L;
+                    @Override
+                    public Iterable<Tuple2<Long, Long>> call(Tuple2<String, Row> tuple) throws Exception {
+                        Row row = tuple._2;
+                        List<Tuple2<Long, Long>> list = new ArrayList<Tuple2<Long, Long>>();
+                        Long clickCategoryId = row.getLong(6);
+                        if(clickCategoryId != null) {
+                            list.add(new Tuple2<Long, Long>(clickCategoryId, clickCategoryId));
+                        }
+
+                        // 这里的 orderCategoryIds.split(",") 循环估计是做错了
+                        String orderCategoryIds = row.getString(8);
+                        if(orderCategoryIds != null) {
+                            String[] orderCategoryIdsSplited = orderCategoryIds.split(",");
+                            if(orderCategoryIdsSplited.length > 1){
+                                System.out.println("orderCategoryIds...");
+                            }
+                            for(String orderCategoryId : orderCategoryIdsSplited) {
+                                list.add(new Tuple2<Long, Long>(Long.valueOf(orderCategoryId), Long.valueOf(orderCategoryId)));
+                            }
+                        }
+
+                        // 这里的 payCategoryIds.split(",") 循环估计是做错了
+                        String payCategoryIds = row.getString(10);
+                        if(payCategoryIds != null) {
+                            String[] payCategoryIdsSplited = payCategoryIds.split(",");
+                            if(payCategoryIdsSplited.length > 1){
+                                System.out.println("payCategoryIds...");
+                            }
+                            for(String payCategoryId : payCategoryIdsSplited) {
+                                list.add(new Tuple2<Long, Long>(Long.valueOf(payCategoryId), Long.valueOf(payCategoryId)));
+                            }
+                        }
+                        return list;
+                    }
+                }
+        );
+        System.out.println(categoryidRDD.count()); // 原来的一行数据 → 现在list.add变多行了
 
 
         // <sessionid, fullAggrInfo>  ---  <sessionid, Row>
