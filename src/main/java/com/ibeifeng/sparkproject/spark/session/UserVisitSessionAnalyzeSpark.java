@@ -86,18 +86,18 @@ public class UserVisitSessionAnalyzeSpark {
 		// 构建Spark上下文
 		SparkConf conf = new SparkConf()
 				.setAppName(Constants.SPARK_APP_NAME_SESSION)
-//				.set("spark.default.parallelism", "100")
-				.set("spark.storage.memoryFraction", "0.5")  
-				.set("spark.shuffle.consolidateFiles", "true")
-				.set("spark.shuffle.file.buffer", "64")  
-				.set("spark.shuffle.memoryFraction", "0.3")    
-				.set("spark.reducer.maxSizeInFlight", "24")  
+//				.set("spark.default.parallelism", "100")  // 设置Spark Application的并行度
+				.set("spark.storage.memoryFraction", "0.5")  // Spark的cache缓存的堆内存占比（默认0.6）
+				.set("spark.shuffle.consolidateFiles", "true")  // 开启了map端输出文件合并机制
+				.set("spark.shuffle.file.buffer", "64")  // map端内存缓冲区大小（默认32kb）
+				.set("spark.shuffle.memoryFraction", "0.3")  // reduce端（拉取）聚合内存占比（默认0.2）
+				.set("spark.reducer.maxSizeInFlight", "24")
 				.set("spark.shuffle.io.maxRetries", "60")  
 				.set("spark.shuffle.io.retryWait", "60")   
-				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-				.registerKryoClasses(new Class[]{
-						CategorySortKey.class,
-						IntList.class});   
+				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer") // Kryo序列化注册
+					.registerKryoClasses(new Class[]{
+							CategorySortKey.class,
+							IntList.class});
 		SparkUtils.setMaster(conf); 
 		
 		/**
