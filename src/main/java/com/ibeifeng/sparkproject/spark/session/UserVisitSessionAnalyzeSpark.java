@@ -91,7 +91,7 @@ public class UserVisitSessionAnalyzeSpark {
 				.set("spark.shuffle.consolidateFiles", "true")  // 开启了map端输出文件合并机制
 				.set("spark.shuffle.file.buffer", "64")  // map端内存缓冲区大小（默认32kb）
 				.set("spark.shuffle.memoryFraction", "0.3")  // reduce端（拉取）聚合内存占比（默认0.2）
-				.set("spark.reducer.maxSizeInFlight", "24")
+				.set("spark.reducer.maxSizeInFlight", "24")  // shuffle reduce端缓冲大小以避免OOM
 				.set("spark.shuffle.io.maxRetries", "60")  
 				.set("spark.shuffle.io.retryWait", "60")   
 				.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer") // Kryo序列化注册
@@ -338,7 +338,7 @@ public class UserVisitSessionAnalyzeSpark {
 	 * 获取sessionid2到访问行为数据的映射的RDD
 	 */
 	public static JavaPairRDD<String, Row> getSessionid2ActionRDD(JavaRDD<Row> actionRDD) {
-		// 传进来的是迭代器，只执行一次
+		// 传进来的是迭代器，只执行一次：mapToPair优化 为 mapPartitionsToPair；里面的PairFunction 也要换为 PairFlatMapFunction
 		return actionRDD.mapPartitionsToPair(new PairFlatMapFunction<Iterator<Row>, String, Row>() {
 			private static final long serialVersionUID = 1L;
 			@Override
@@ -1516,7 +1516,7 @@ public class UserVisitSessionAnalyzeSpark {
 						return row.get(6) != null ? true : false;
 					}
 				}
-		); //.coalesce(100);
+		); //.coalesce(100);  // partition数量压缩到100
 		
 		JavaPairRDD<Long, Long> clickCategoryIdRDD = clickActionRDD.mapToPair(
 				new PairFunction<Tuple2<String,Row>, Long, Long>() {
