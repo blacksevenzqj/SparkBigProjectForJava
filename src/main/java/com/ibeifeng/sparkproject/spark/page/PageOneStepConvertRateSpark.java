@@ -43,8 +43,7 @@ public class PageOneStepConvertRateSpark {
 	
 	public static void main(String[] args) {
 		// 1、构造Spark上下文
-		SparkConf conf = new SparkConf()
-				.setAppName(Constants.SPARK_APP_NAME_PAGE);
+		SparkConf conf = new SparkConf().setAppName(Constants.SPARK_APP_NAME_PAGE);
 		SparkUtils.setMaster(conf);  
 		
 		JavaSparkContext sc = new JavaSparkContext(conf);
@@ -66,8 +65,7 @@ public class PageOneStepConvertRateSpark {
 		JSONObject taskParam = JSONObject.parseObject(task.getTaskParam());
 		
 		// 4、查询指定日期范围内的用户访问行为数据
-		JavaRDD<Row> actionRDD = SparkUtils.getActionRDDByDateRange(
-				sqlContext, taskParam);
+		JavaRDD<Row> actionRDD = SparkUtils.getActionRDDByDateRange(sqlContext, taskParam);
 		
 		// 对用户访问行为数据做一个映射，将其映射为<sessionid,访问行为>的格式
 		// 咱们的用户访问页面切片的生成，是要基于每个session的访问数据，来进行生成的
@@ -108,18 +106,14 @@ public class PageOneStepConvertRateSpark {
 	 * @param actionRDD 用户访问行为RDD
 	 * @return <sessionid,用户访问行为>格式的数据
 	 */
-	private static JavaPairRDD<String, Row> getSessionid2actionRDD(
-			JavaRDD<Row> actionRDD) {
+	private static JavaPairRDD<String, Row> getSessionid2actionRDD(JavaRDD<Row> actionRDD) {
 		return actionRDD.mapToPair(new PairFunction<Row, String, Row>() {
-
 			private static final long serialVersionUID = 1L;
-
 			@Override
 			public Tuple2<String, Row> call(Row row) throws Exception {
 				String sessionid = row.getString(2);
 				return new Tuple2<String, Row>(sessionid, row);   
 			}
-			
 		});
 	}
 	
@@ -138,18 +132,13 @@ public class PageOneStepConvertRateSpark {
 		final Broadcast<String> targetPageFlowBroadcast = sc.broadcast(targetPageFlow);
 		
 		return sessionid2actionsRDD.flatMapToPair(
-				
 				new PairFlatMapFunction<Tuple2<String,Iterable<Row>>, String, Integer>() {
-
 					private static final long serialVersionUID = 1L;
-
 					@Override
 					public Iterable<Tuple2<String, Integer>> call(
-							Tuple2<String, Iterable<Row>> tuple)
-							throws Exception {
+							Tuple2<String, Iterable<Row>> tuple) throws Exception {
 						// 定义返回list
-						List<Tuple2<String, Integer>> list = 
-								new ArrayList<Tuple2<String, Integer>>();
+						List<Tuple2<String, Integer>> list = new ArrayList<Tuple2<String, Integer>>();
 						// 获取到当前session的访问行为的迭代器
 						Iterator<Row> iterator = tuple._2.iterator();
 						// 获取使用者指定的页面流
@@ -172,8 +161,7 @@ public class PageOneStepConvertRateSpark {
 							rows.add(iterator.next());  
 						}
 						
-						Collections.sort(rows, new Comparator<Row>() {
-							
+						Collections.sort(rows, new Comparator<Row>() { // 升序排列
 							@Override
 							public int compare(Row o1, Row o2) {
 								String actionTime1 = o1.getString(4);
@@ -238,21 +226,13 @@ public class PageOneStepConvertRateSpark {
 		String targetPageFlow = ParamUtils.getParam(taskParam, 
 				Constants.PARAM_TARGET_PAGE_FLOW);
 		final long startPageId = Long.valueOf(targetPageFlow.split(",")[0]);  
-		
 		JavaRDD<Long> startPageRDD = sessionid2actionsRDD.flatMap(
-				
 				new FlatMapFunction<Tuple2<String,Iterable<Row>>, Long>() {
-
 					private static final long serialVersionUID = 1L;
-
 					@Override
-					public Iterable<Long> call(
-							Tuple2<String, Iterable<Row>> tuple)
-							throws Exception {
+					public Iterable<Long> call(Tuple2<String, Iterable<Row>> tuple) throws Exception {
 						List<Long> list = new ArrayList<Long>();
-						
 						Iterator<Row> iterator = tuple._2.iterator();
-						
 						while(iterator.hasNext()) {
 							Row row = iterator.next();
 							long pageid = row.getLong(3);
@@ -261,10 +241,8 @@ public class PageOneStepConvertRateSpark {
 								list.add(pageid);
 							}
 						}
-						
 						return list;
 					}  
-					
 				});
 		
 		return startPageRDD.count();

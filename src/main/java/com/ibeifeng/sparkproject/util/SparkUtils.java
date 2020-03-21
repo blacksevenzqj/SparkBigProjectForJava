@@ -88,7 +88,6 @@ public class SparkUtils {
 		 * 所以说，在这里，就可以对Spark SQL刚刚查询出来的RDD执行repartition重分区操作
 		 */
 //		return actionDF.javaRDD().repartition(1000);
-		
 		return actionDF.javaRDD();
 	}
 	
