@@ -30,9 +30,7 @@ public class UDF {
         stringList.add("Tom");
         JavaRDD<String> rdd = sparkContext.parallelize(stringList);
         JavaRDD<Row> nameRDD = rdd.map(new Function<String, Row>() {
-
             private static final long serialVersionUID = 1L;
-
             @Override
             public Row call(String v1) throws Exception {
                 return RowFactory.create(v1);
@@ -46,22 +44,17 @@ public class UDF {
 
         dataFrame.registerTempTable("name");
         sqlContext.udf().register("strLen", new UDF1<String, Integer>() {
-
             private static final long serialVersionUID = 1L;
-
             @Override
             public Integer call(String s) throws Exception {
-                // TODO Auto-generated method stub
                 return s.length();
             }
 
         }, DataTypes.IntegerType);
 
-        sqlContext.sql("select name, strLen(name) from name").javaRDD().
-                foreach(new VoidFunction<Row>() {
-
+        sqlContext.sql("select name, strLen(name) from name").javaRDD().foreach(
+                new VoidFunction<Row>() {
                     private static final long serialVersionUID = 1L;
-
                     @Override
                     public void call(Row row) throws Exception {
                         System.out.println(row);

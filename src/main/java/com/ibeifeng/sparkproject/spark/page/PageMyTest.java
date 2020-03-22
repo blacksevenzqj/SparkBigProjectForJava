@@ -62,7 +62,7 @@ public class PageMyTest {
         Map<String, Double> convertRateMap = PageFunctionMyTest.computePageSplitConvertRate(
                 taskParam, pageSplitPvMap, startPagePv);
 
-        // 持久化页面切片转化率：page_split_convert_rate这表没建，报错
+        // 持久化页面切片转化率
         PageFunctionMyTest.persistConvertRate(taskid, convertRateMap);
     }
 

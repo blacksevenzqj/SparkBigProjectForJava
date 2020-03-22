@@ -28,7 +28,7 @@ import scala.Tuple2;
 
 import java.util.*;
 
-public class MyTest {
+public class SessionMyTest {
 
     public static void main(String[] args) {
         // 构建Spark上下文

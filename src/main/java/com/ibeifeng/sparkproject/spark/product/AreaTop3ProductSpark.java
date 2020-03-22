@@ -41,8 +41,7 @@ public class AreaTop3ProductSpark {
 	
 	public static void main(String[] args) {
 		// 创建SparkConf
-		SparkConf conf = new SparkConf()
-				.setAppName("AreaTop3ProductSpark");
+		SparkConf conf = new SparkConf().setAppName("AreaTop3ProductSpark");
 		SparkUtils.setMaster(conf); 
 		
 		// 构建Spark上下文
@@ -69,8 +68,7 @@ public class AreaTop3ProductSpark {
 		// 获取命令行传入的taskid，查询对应的任务参数
 		ITaskDAO taskDAO = DAOFactory.getTaskDAO();
 		
-		long taskid = ParamUtils.getTaskIdFromArgs(args, 
-				Constants.SPARK_LOCAL_TASKID_PRODUCT);
+		long taskid = ParamUtils.getTaskIdFromArgs(args, Constants.SPARK_LOCAL_TASKID_PRODUCT);
 		Task task = taskDAO.findById(taskid);
 		
 		JSONObject taskParam = JSONObject.parseObject(task.getTaskParam());
@@ -79,8 +77,7 @@ public class AreaTop3ProductSpark {
 		
 		// 查询用户指定日期范围内的点击行为数据（city_id，在哪个城市发生的点击行为）
 		// 技术点1：Hive数据源的使用
-		JavaPairRDD<Long, Row> cityid2clickActionRDD = getcityid2ClickActionRDDByDate(
-				sqlContext, startDate, endDate);
+		JavaPairRDD<Long, Row> cityid2clickActionRDD = getcityid2ClickActionRDDByDate(sqlContext, startDate, endDate);
 		System.out.println("cityid2clickActionRDD: " + cityid2clickActionRDD.count());  
 		
 		// 从MySQL中查询城市信息
@@ -90,8 +87,7 @@ public class AreaTop3ProductSpark {
 		
 		// 生成点击商品基础信息临时表
 		// 技术点3：将RDD转换为DataFrame，并注册临时表
-		generateTempClickProductBasicTable(sqlContext, 
-				cityid2clickActionRDD, cityid2cityInfoRDD); 
+		generateTempClickProductBasicTable(sqlContext, cityid2clickActionRDD, cityid2cityInfoRDD);
 		
 		// 生成各区域各商品点击次数的临时表
 		generateTempAreaPrdocutClickCountTable(sqlContext);
@@ -127,8 +123,7 @@ public class AreaTop3ProductSpark {
 		// 从user_visit_action中，查询用户访问行为数据
 		// 第一个限定：click_product_id，限定为不为空的访问行为，那么就代表着点击行为
 		// 第二个限定：在用户指定的日期范围内的数据
-		
-		String sql = 
+		String sql =
 				"SELECT "
 					+ "city_id,"
 					+ "click_product_id product_id "
@@ -142,17 +137,13 @@ public class AreaTop3ProductSpark {
 		JavaRDD<Row> clickActionRDD = clickActionDF.javaRDD();
 	
 		JavaPairRDD<Long, Row> cityid2clickActionRDD = clickActionRDD.mapToPair(
-				
 				new PairFunction<Row, Long, Row>() {
-
 					private static final long serialVersionUID = 1L;
-
 					@Override
 					public Tuple2<Long, Row> call(Row row) throws Exception {
 						Long cityid = row.getLong(0);
 						return new Tuple2<Long, Row>(cityid, row);  
 					}
-					
 				});
 		
 		return cityid2clickActionRDD;
@@ -187,24 +178,19 @@ public class AreaTop3ProductSpark {
 		options.put("password", password);  
 		
 		// 通过SQLContext去从MySQL中查询数据
-		DataFrame cityInfoDF = sqlContext.read().format("jdbc")
-				.options(options).load();
+		DataFrame cityInfoDF = sqlContext.read().format("jdbc").options(options).load();
 		
 		// 返回RDD
 		JavaRDD<Row> cityInfoRDD = cityInfoDF.javaRDD();
 	
 		JavaPairRDD<Long, Row> cityid2cityInfoRDD = cityInfoRDD.mapToPair(
-			
 				new PairFunction<Row, Long, Row>() {
-
 					private static final long serialVersionUID = 1L;
-
 					@Override
 					public Tuple2<Long, Row> call(Row row) throws Exception {
 						long cityid = Long.valueOf(String.valueOf(row.get(0)));  
 						return new Tuple2<Long, Row>(cityid, row);
 					}
-					
 				});
 		
 		return cityid2cityInfoRDD;
@@ -221,19 +207,14 @@ public class AreaTop3ProductSpark {
 			JavaPairRDD<Long, Row> cityid2clickActionRDD,
 			JavaPairRDD<Long, Row> cityid2cityInfoRDD) {
 		// 执行join操作，进行点击行为数据和城市数据的关联
-		JavaPairRDD<Long, Tuple2<Row, Row>> joinedRDD =
-				cityid2clickActionRDD.join(cityid2cityInfoRDD);
+		JavaPairRDD<Long, Tuple2<Row, Row>> joinedRDD = cityid2clickActionRDD.join(cityid2cityInfoRDD);
 		
 		// 将上面的JavaPairRDD，转换成一个JavaRDD<Row>（才能将RDD转换为DataFrame）
 		JavaRDD<Row> mappedRDD = joinedRDD.map(
-				
 				new Function<Tuple2<Long,Tuple2<Row,Row>>, Row>() {
-
 					private static final long serialVersionUID = 1L;
-
 					@Override
-					public Row call(Tuple2<Long, Tuple2<Row, Row>> tuple)
-							throws Exception {
+					public Row call(Tuple2<Long, Tuple2<Row, Row>> tuple) throws Exception {
 						long cityid = tuple._1;
 						Row clickAction = tuple._2._1;
 						Row cityInfo = tuple._2._2;
