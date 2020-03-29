@@ -271,12 +271,12 @@ public class AreaTop3ProductSpark {
 					+ "group_concat_distinct(concat_long_string(city_id,city_name,':')) city_infos "  
 				+ "FROM tmp_click_product_basic "
 				+ "GROUP BY area,product_id ";
-		
+
+
 		/**
-		 * 双重group by
+		 * 为解决数据倾斜问题： 4、双重group by（可能有Bug）
 		 */
-		
-//		String _sql = 
+//		String _sql =
 //				"SELECT "
 //					+ "product_id_area,"
 //					+ "count(click_count) click_count,"
@@ -290,18 +290,18 @@ public class AreaTop3ProductSpark {
 //						+ "SELECT "
 //							+ "product_id_area,"
 //							+ "count(*) click_count,"
-//							+ "group_concat_distinct(concat_long_string(city_id,city_name,':')) city_infos " 
+//							+ "group_concat_distinct(concat_long_string(city_id,city_name,':')) city_infos "
 //						+ "FROM ( "
-//							+ "SELECT "  
+//							+ "SELECT "
 //								+ "random_prefix(concat_long_string(product_id,area,':'), 10) product_id_area,"
 //								+ "city_id,"
 //								+ "city_name "
 //							+ "FROM tmp_click_product_basic "
 //						+ ") t1 "
 //						+ "GROUP BY product_id_area "
-//					+ ") t2 "  
+//					+ ") t2 "
 //				+ ") t3 "
-//				+ "GROUP BY product_id_area ";  
+//				+ "GROUP BY product_id_area ";
 		
 		// 使用Spark SQL执行这条SQL语句
 		DataFrame df = sqlContext.sql(sql);
@@ -330,8 +330,7 @@ public class AreaTop3ProductSpark {
 		// 其实是很重要的一件事
 		
 		// 技术点：内置if函数的使用
-		
-		String sql = 
+		String sql =
 				"SELECT "
 					+ "tapcc.area,"
 					+ "tapcc.product_id,"
@@ -341,41 +340,40 @@ public class AreaTop3ProductSpark {
 					+ "if(get_json_object(pi.extend_info,'product_status')='0','Self','Third Party') product_status "
 				+ "FROM tmp_area_product_click_count tapcc "
 				+ "JOIN product_info pi ON tapcc.product_id=pi.product_id ";
-		
+
+		/**
+		 * 为解决数据倾斜问题： 7、随机key与扩容表：Spark SQL + Spark Core
+		 */
+		// 7.1、用Spark Core 将 product_info 扩容了10倍
 //		JavaRDD<Row> rdd = sqlContext.sql("select * from product_info").javaRDD();
 //		JavaRDD<Row> flattedRDD = rdd.flatMap(new FlatMapFunction<Row, Row>() {
-//
 //			private static final long serialVersionUID = 1L;
-//
 //			@Override
 //			public Iterable<Row> call(Row row) throws Exception {
 //				List<Row> list = new ArrayList<Row>();
-//				
 //				for(int i = 0; i < 10; i ++) {
 //					long productid = row.getLong(0);
 //					String _productid = i + "_" + productid;
-//					
 //					Row _row = RowFactory.create(_productid, row.get(1), row.get(2));
 //					list.add(_row);
 //				}
-//				
 //				return list;
 //			}
-//			
 //		});
-//		
+
+//		// 7.2、转换为DataFrame之后进行操作
 //		StructType _schema = DataTypes.createStructType(Arrays.asList(
 //				DataTypes.createStructField("product_id", DataTypes.StringType, true),
 //				DataTypes.createStructField("product_name", DataTypes.StringType, true),
 //				DataTypes.createStructField("product_status", DataTypes.StringType, true)));
-//		
+//
 //		DataFrame _df = sqlContext.createDataFrame(flattedRDD, _schema);
-//		_df.registerTempTable("tmp_product_info");  
-//		
-//		String _sql = 
+//		_df.registerTempTable("tmp_product_info");
+//
+//		String _sql =
 //				"SELECT "
 //					+ "tapcc.area,"
-//					+ "remove_random_prefix(tapcc.product_id) product_id," 
+//					+ "remove_random_prefix(tapcc.product_id) product_id,"
 //					+ "tapcc.click_count,"
 //					+ "tapcc.city_infos,"
 //					+ "pi.product_name,"

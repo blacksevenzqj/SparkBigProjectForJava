@@ -111,7 +111,8 @@ public class GroupConcatDistinctUDAF extends UserDefinedAggregateFunction {
 		
 		buffer1.update(0, bufferCityInfo1);  
 	}
-	
+
+	// 最后返回结果
 	@Override
 	public Object evaluate(Row row) {  
 		return row.getString(0);  

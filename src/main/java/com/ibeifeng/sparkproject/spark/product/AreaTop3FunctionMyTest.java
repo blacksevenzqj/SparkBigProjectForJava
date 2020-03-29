@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AreaTopFunctionMyTest {
+public class AreaTop3FunctionMyTest {
 
     public static JavaPairRDD<Long, Row> getcityid2ClickActionRDDByDate(SQLContext sqlContext, String startDate, String endDate){
         String sql =

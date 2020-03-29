@@ -14,7 +14,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.types.DataTypes;
 
-public class AreaTopMyTest {
+public class AreaTop3MyTest {
 
     public static void main(String args[]){
         // 创建SparkConf
@@ -54,17 +54,17 @@ public class AreaTopMyTest {
 
         // 查询用户指定日期范围内的点击行为数据（city_id，在哪个城市发生的点击行为）
         // 技术点1：Hive数据源的使用
-        JavaPairRDD<Long, Row> cityid2clickActionRDD = AreaTopFunctionMyTest.getcityid2ClickActionRDDByDate(sqlContext, startDate, endDate);
+        JavaPairRDD<Long, Row> cityid2clickActionRDD = AreaTop3FunctionMyTest.getcityid2ClickActionRDDByDate(sqlContext, startDate, endDate);
         System.out.println("cityid2clickActionRDD: " + cityid2clickActionRDD.count());
 
         // 从MySQL中查询城市信息
         // 技术点2：异构数据源之MySQL的使用
-        JavaPairRDD<Long, Row> cityid2cityInfoRDD = AreaTopFunctionMyTest.getcityid2CityInfoRDD(sqlContext);
+        JavaPairRDD<Long, Row> cityid2cityInfoRDD = AreaTop3FunctionMyTest.getcityid2CityInfoRDD(sqlContext);
         System.out.println("cityid2cityInfoRDD: " + cityid2cityInfoRDD.count());
 
         // 生成点击商品基础信息临时表
         // 技术点3：将RDD转换为DataFrame，并注册临时表
-        AreaTopFunctionMyTest.generateTempClickProductBasicTable(sqlContext, cityid2clickActionRDD, cityid2cityInfoRDD);
+        AreaTop3FunctionMyTest.generateTempClickProductBasicTable(sqlContext, cityid2clickActionRDD, cityid2cityInfoRDD);
 
 
     }
