@@ -39,27 +39,19 @@ public class AdBlacklistDAOImpl implements IAdBlacklistDAO {
 	 */
 	public List<AdBlacklist> findAll() {
 		String sql = "SELECT * FROM ad_blacklist"; 
-		
 		final List<AdBlacklist> adBlacklists = new ArrayList<AdBlacklist>();
-		
 		JDBCHelper jdbcHelper = JDBCHelper.getInstance();
-		
 		jdbcHelper.executeQuery(sql, null, new JDBCHelper.QueryCallback() {
-			
 			@Override
 			public void process(ResultSet rs) throws Exception {
 				while(rs.next()) {
 					long userid = Long.valueOf(String.valueOf(rs.getInt(1)));  
-					
 					AdBlacklist adBlacklist = new AdBlacklist();
 					adBlacklist.setUserid(userid);  
-					
 					adBlacklists.add(adBlacklist);
 				}
 			}
-			
 		});
-		
 		return adBlacklists;
 	}
 

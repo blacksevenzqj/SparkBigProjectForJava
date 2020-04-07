@@ -35,7 +35,6 @@ public class AdUserClickCountDAOImpl implements IAdUserClickCountDAO {
 					adUserClickCount.getUserid(), adUserClickCount.getAdid()};
 			
 			jdbcHelper.executeQuery(selectSQL, selectParams, new JDBCHelper.QueryCallback() {
-				
 				@Override
 				public void process(ResultSet rs) throws Exception {
 					if(rs.next()) {
