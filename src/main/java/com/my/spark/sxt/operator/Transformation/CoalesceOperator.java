@@ -35,9 +35,13 @@ public class CoalesceOperator {
 
         System.out.println("===========================================================");
 
-        // 压缩Partition：
-        // RDD.coalesce(x)：默认shuffle=false时，只有Partition在一台机器上的时候才能生效，如果Partition分布在多台机器上不生效。
-        // shuffle=true时，Partition所在多台机器进行shuffle代价大。
+        /**
+        1、压缩Partition：
+        RDD.coalesce(x)：默认shuffle=false时，只有Partition在一台机器上的时候才能生效，如果Partition分布在多台机器上不生效。
+        shuffle=true时，Partition所在多台机器进行shuffle代价大。
+        2、扩展Partition：
+        RDD.coalesce(x, shuffle=True)：这时就相当于repartition了，因为repartition最终调用了coalesce(numPartitions, shuffle = true)
+        **/
         JavaRDD<String> staffRDD3 = staffRDD2.coalesce(3);
         JavaRDD<String> staffRDD4 = staffRDD3.mapPartitionsWithIndex(new Function2<Integer, Iterator<String>, Iterator<String>>() {
             @Override

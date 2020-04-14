@@ -36,7 +36,7 @@ public class RepartitionOperator {
             System.out.println(staffInfo);
         }
 
-        JavaRDD<String> staffRDD3 = staffRDD2.repartition(6); // 最终是调用了coalesce
+        JavaRDD<String> staffRDD3 = staffRDD2.repartition(6); // 最终是调用了coalesce：coalesce(numPartitions, shuffle = true)
         JavaRDD<String> staffRDD4 = staffRDD3.mapPartitionsWithIndex(new Function2<Integer, Iterator<String>, Iterator<String>>() {
             @Override
             public Iterator<String> call(Integer index, Iterator<String> iterator) throws Exception {
